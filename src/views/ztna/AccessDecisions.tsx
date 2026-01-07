@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, Table, Button, TextInput, Badge, Spinner } from "flowbite-react";
-import { getRecentDecisions } from "./backend";
-
+// ✅ Changed: Import both the function AND the Type from the backend file
+import { getRecentDecisions, AccessDecision } from "./backend";
 
 const AccessDecisions = () => {
+  // TypeScript now uses the AccessDecision definition from your backend.ts
   const [data, setData] = useState<AccessDecision[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Simple filters
   const [qSubject, setQSubject] = useState("");
   const [qZone, setQZone] = useState("");
   const [qResource, setQResource] = useState("");
-  const [qDecision, setQDecision] = useState(""); // PERMIT / DENY
+  const [qDecision, setQDecision] = useState("");
 
   useEffect(() => {
     void load();
@@ -22,7 +22,7 @@ const AccessDecisions = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getRecentDecisions(200); // show more history
+      const res = await getRecentDecisions(200);
       setData(res);
     } catch (e) {
       console.error(e);
@@ -35,7 +35,7 @@ const AccessDecisions = () => {
   const filtered = useMemo(() => {
     return data.filter((d) => {
       const subjectOk = qSubject
-        ? d.subjectId?.toLowerCase().includes(qSubject.toLowerCase())
+        ? d.subjectId.toLowerCase().includes(qSubject.toLowerCase())
         : true;
 
       const zoneOk = qZone
@@ -43,11 +43,11 @@ const AccessDecisions = () => {
         : true;
 
       const resourceOk = qResource
-        ? d.resource?.toLowerCase().includes(qResource.toLowerCase())
+        ? d.resource.toLowerCase().includes(qResource.toLowerCase())
         : true;
 
       const decisionOk = qDecision
-        ? d.decision?.toLowerCase() === qDecision.toLowerCase()
+        ? d.decision.toLowerCase() === qDecision.toLowerCase()
         : true;
 
       return subjectOk && zoneOk && resourceOk && decisionOk;
@@ -57,59 +57,46 @@ const AccessDecisions = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Access Decisions</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Access Decisions
+        </h1>
         <p className="text-sm text-gray-500">
-          Full history of Zero Trust PDP decisions (PERMIT/DENY).
+          Full history of Zero Trust PDP decisions (PERMIT / DENY)
         </p>
       </div>
 
       <Card>
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="grid gap-3 md:grid-cols-4 w-full">
-            <div>
-              <label className="text-xs text-gray-500">Subject</label>
-              <TextInput
-                value={qSubject}
-                onChange={(e) => setQSubject(e.target.value)}
-                placeholder="e.g. hassan"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-500">Zone</label>
-              <TextInput
-                value={qZone}
-                onChange={(e) => setQZone(e.target.value)}
-                placeholder="USER / DMZ / APP / SOC"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-500">Resource</label>
-              <TextInput
-                value={qResource}
-                onChange={(e) => setQResource(e.target.value)}
-                placeholder="dashboard"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-500">Decision</label>
-              <TextInput
-                value={qDecision}
-                onChange={(e) => setQDecision(e.target.value)}
-                placeholder="PERMIT or DENY"
-              />
-            </div>
+            <TextInput
+              placeholder="Subject"
+              value={qSubject}
+              onChange={(e) => setQSubject(e.target.value)}
+            />
+            <TextInput
+              placeholder="Zone"
+              value={qZone}
+              onChange={(e) => setQZone(e.target.value)}
+            />
+            <TextInput
+              placeholder="Resource"
+              value={qResource}
+              onChange={(e) => setQResource(e.target.value)}
+            />
+            <TextInput
+              placeholder="PERMIT / DENY"
+              value={qDecision}
+              onChange={(e) => setQDecision(e.target.value)}
+            />
           </div>
 
           <div className="flex gap-2">
-            <Button onClick={() => void load()} size="sm">
+            <Button size="sm" onClick={() => void load()}>
               Refresh
             </Button>
             <Button
-              color="light"
               size="sm"
+              color="light"
               onClick={() => {
                 setQSubject("");
                 setQZone("");
@@ -130,7 +117,9 @@ const AccessDecisions = () => {
             </div>
           )}
 
-          {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+          {error && (
+            <p className="text-sm text-red-600 mt-2">{error}</p>
+          )}
 
           <div className="mt-3 max-h-[520px] overflow-auto text-sm">
             <Table hoverable>
@@ -149,7 +138,7 @@ const AccessDecisions = () => {
                 {!loading && filtered.length === 0 && (
                   <Table.Row>
                     <Table.Cell colSpan={8} className="text-gray-400">
-                      No decisions found (try Refresh or clear filters).
+                      No decisions found.
                     </Table.Cell>
                   </Table.Row>
                 )}
@@ -157,17 +146,23 @@ const AccessDecisions = () => {
                 {filtered.map((d) => (
                   <Table.Row key={d.id}>
                     <Table.Cell>
-                      {d.createdAt
-                        ? new Date(d.createdAt).toLocaleString()
-                        : "-"}
+                      {new Date(d.createdAt).toLocaleString()}
                     </Table.Cell>
-                    <Table.Cell className="font-medium">{d.subjectId}</Table.Cell>
+                    <Table.Cell className="font-medium">
+                      {d.subjectId}
+                    </Table.Cell>
                     <Table.Cell>{d.zone ?? "-"}</Table.Cell>
                     <Table.Cell>{d.sourceIp ?? "-"}</Table.Cell>
                     <Table.Cell>{d.resource}</Table.Cell>
                     <Table.Cell>{d.action}</Table.Cell>
                     <Table.Cell>
-                      <Badge color={d.decision === "PERMIT" ? "success" : "failure"}>
+                      <Badge
+                        color={
+                          d.decision === "PERMIT"
+                            ? "success"
+                            : "failure"
+                        }
+                      >
                         {d.decision}
                       </Badge>
                     </Table.Cell>
